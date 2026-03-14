@@ -34,18 +34,26 @@ def main():
 
     formatted_messages = []
     for msg in messages:
-        content = msg["content"]
-        if isinstance(content, str):
-            formatted_messages.append({"role": msg["role"], "content": content})
-        else:
-            formatted_messages.append(msg)
+        content = msg.get("content", msg.get("value", ""))
+        role = msg.get("role", msg.get("from", "user"))
+        if isinstance(content, list):
+            text_parts = []
+            for c in content:
+                if isinstance(c, dict) and "text" in c:
+                    text_parts.append(c["text"])
+                elif isinstance(c, str):
+                    text_parts.append(c)
+            content = " ".join(text_parts)
+        formatted_messages.append({"role": role, "content": content})
 
-    inputs = tokenizer.apply_chat_template(
-        formatted_messages,
-        tokenize=True,
-        add_generation_prompt=True,
-        return_tensors="pt",
-    ).to("cuda")
+    prompt = "<|im_start|>user\n"
+    for msg in formatted_messages:
+        if msg["role"] == "user":
+            prompt += msg["content"] + "<|im_end|>\n<|im_start|>assistant\n"
+        elif msg["role"] == "assistant":
+            prompt += msg["content"] + "<|im_end|>\n"
+
+    inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
 
     from transformers import TextStreamer
 
@@ -65,9 +73,16 @@ def main():
     print("\n" + "=" * 60)
     print("Expected review:")
     print("=" * 60)
-    expected_content = test_sample[col][-1]["content"]
+    last_msg = test_sample[col][-1]
+    expected_content = last_msg.get("content", last_msg.get("value", ""))
     if isinstance(expected_content, list):
-        expected_content = " ".join([c.get("text", str(c)) for c in expected_content])
+        text_parts = []
+        for c in expected_content:
+            if isinstance(c, dict) and "text" in c:
+                text_parts.append(c["text"])
+            elif isinstance(c, str):
+                text_parts.append(c)
+        expected_content = " ".join(text_parts)
     print(expected_content)
 
     print("\n" + "=" * 60)
