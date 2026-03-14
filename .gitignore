@@ -14,20 +14,13 @@ ENV/
 # Jupyter
 .ipynb_checkpoints/
 
-# Models
+# Models (trained adapters)
 models/
 
-# Large dataset files (keep python_subset)
-dataset/github_codereview_*.parquet
-dataset/*.parquet
-
-# Keep python_subset and analysis
-!dataset/python_subset/
-!dataset/analysis.md
-!dataset/analysis.ipynb
-
-# uv
-.uv/
+# Cache
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
 
 # OS
 .DS_Store
