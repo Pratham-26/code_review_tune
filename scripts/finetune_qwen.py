@@ -26,12 +26,11 @@ import os
 import torch
 from datasets import load_dataset
 from pathlib import Path
-from config import HF_TOKEN, OUTPUT_DIR
+from config import HF_TOKEN, OUTPUT_DIR, DATASET_NAME
 
 os.environ["TQDM_MININTERVAL"] = "5"
 
 MODEL_NAME = "unsloth/Qwen3.5-0.8B"
-DATASET_NAME = "PrathamKotian26/code-review-python-autotrain"
 
 MAX_SEQ_LENGTH = 2056
 
@@ -214,10 +213,20 @@ def main():
 
     test_dataset = load_dataset(DATASET_NAME, split="test", token=HF_TOKEN)
     test_sample = test_dataset[0]
-    messages = test_sample["messages"][:-1]
+
+    col = "messages" if "messages" in test_dataset.column_names else "conversations"
+    messages = test_sample[col][:-1]
+
+    formatted_messages = []
+    for msg in messages:
+        content = msg["content"]
+        if isinstance(content, str):
+            formatted_messages.append({"role": msg["role"], "content": content})
+        else:
+            formatted_messages.append(msg)
 
     inputs = tokenizer.apply_chat_template(
-        messages,
+        formatted_messages,
         tokenize=True,
         add_generation_prompt=True,
         return_tensors="pt",
@@ -228,7 +237,10 @@ def main():
     text_streamer = TextStreamer(tokenizer, skip_prompt=True)
 
     print("\nExpected output:")
-    print(test_sample["messages"][-1]["content"])
+    expected_content = test_sample[col][-1]["content"]
+    if isinstance(expected_content, list):
+        expected_content = " ".join([c.get("text", str(c)) for c in expected_content])
+    print(expected_content)
     print("\nGenerated review:")
 
     _ = model.generate(

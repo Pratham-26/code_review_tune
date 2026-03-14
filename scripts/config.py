@@ -17,3 +17,4 @@ if not HF_TOKEN:
     )
 
 OUTPUT_DIR = Path(__file__).parent.parent / "models" / "code_review_model"
+DATASET_NAME = "PrathamKotian26/code-review-python-autotrain"
