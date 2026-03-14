@@ -127,9 +127,9 @@ def main():
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         args=SFTConfig(
-            per_device_train_batch_size=2,
-            per_device_eval_batch_size=2,
-            gradient_accumulation_steps=4,
+            per_device_train_batch_size=4,
+            per_device_eval_batch_size=4,
+            gradient_accumulation_steps=2,
             warmup_steps=20,
             num_train_epochs=1,
             learning_rate=2e-4,
