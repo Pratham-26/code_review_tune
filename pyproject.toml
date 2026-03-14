@@ -1,0 +1,23 @@
+[project]
+name = "code-review-tune"
+version = "0.1.0"
+description = "Fine-tune Qwen model for Python code review"
+requires-python = ">=3.10"
+dependencies = [
+    "polars>=1.0.0",
+    "pyarrow>=15.0.0",
+    "datasets>=2.18.0",
+]
+
+[project.optional-dependencies]
+train = [
+    "transformers>=4.40.0",
+    "torch>=2.2.0",
+    "trl>=0.8.0",
+    "bitsandbytes>=0.43.0",
+    "accelerate>=0.28.0",
+    "peft>=0.10.0",
+]
+
+[tool.uv]
+dev-dependencies = []
