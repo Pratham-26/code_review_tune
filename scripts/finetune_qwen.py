@@ -11,13 +11,18 @@ uv sync
 uv pip install "unsloth[base] @ git+https://github.com/unslothai/unsloth"
 uv pip install "unsloth_zoo[base] @ git+https://github.com/unslothai/unsloth-zoo"
 uv pip install triton xformers
+
+# Flash Attention 2 (recommended for ~1.5x speedup)
+pip install flash-attn --no-build-isolation
 ```
 
 ## Run training
 
 ```bash
 export HF_TOKEN=your_token
-uv run python scripts/finetune_qwen.py
+
+# With clean logging
+python scripts/finetune_qwen.py 2>&1 | tee training.log
 ```
 """
 

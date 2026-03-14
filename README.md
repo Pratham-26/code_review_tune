@@ -24,13 +24,22 @@ uv pip install -r requirements.txt
 uv pip install "unsloth[base] @ git+https://github.com/unslothai/unsloth"
 uv pip install "unsloth_zoo[base] @ git+https://github.com/unslothai/unsloth-zoo"
 uv pip install triton xformers
+
+# Flash Attention 2 (recommended for ~1.5x speedup)
+pip install flash-attn --no-build-isolation
 ```
 
 ## Run Training
 
 ```bash
-python scripts/finetune_qwen.py
+# Run with clean logging (recommended)
+python scripts/finetune_qwen.py 2>&1 | tee training.log
+
+# View progress in another terminal
+tail -f training.log
 ```
+
+Using `screen` or `tmux` is recommended for long training runs on remote instances.
 
 ## Push to Hugging Face Hub
 
@@ -61,9 +70,11 @@ python scripts/test_model.py --hub-repo PrathamKotian26/code-review-qwen-0.8b
 | Model | unsloth/Qwen3.5-0.8B |
 | Max sequence length | 6000 |
 | LoRA rank | 16 |
-| Batch size | 2 × 4 (effective: 8) |
+| Batch size | 8 |
+| Gradient accumulation | 1 |
 | Learning rate | 2e-4 |
 | Epochs | 1 |
+| Packing | Enabled |
 
 ## Output
 
