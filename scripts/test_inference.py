@@ -53,11 +53,14 @@ def main():
         elif msg["role"] == "assistant":
             prompt += msg["content"] + "<|im_end|>\n"
 
-    inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+    text_tokenizer = (
+        tokenizer.tokenizer if hasattr(tokenizer, "tokenizer") else tokenizer
+    )
+    inputs = text_tokenizer(prompt, return_tensors="pt").to("cuda")
 
     from transformers import TextStreamer
 
-    text_streamer = TextStreamer(tokenizer, skip_prompt=True)
+    text_streamer = TextStreamer(text_tokenizer, skip_prompt=True)
 
     print("\n" + "=" * 60)
     print("Input code:")
