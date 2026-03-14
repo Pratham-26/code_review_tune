@@ -1,0 +1,9 @@
+unsloth
+trl>=0.12.0
+transformers>=4.40.0
+datasets
+torch
+accelerate
+bitsandbytes
+peft
+huggingface_hub

@@ -16,10 +16,4 @@ if not HF_TOKEN:
         "Please set: export HF_TOKEN=your_token_here"
     )
 
-HF_USERNAME = "pratham"
-MODEL_NAME = "code-review-qwen-0.8b"
-
-REPO_ID = f"{HF_USERNAME}/{MODEL_NAME}"
-
-DATA_DIR = Path(__file__).parent.parent / "dataset" / "python_subset"
 OUTPUT_DIR = Path(__file__).parent.parent / "models" / "code_review_model"

@@ -8,7 +8,6 @@ Based on Unsloth reference scripts. Uses LoRA for efficient fine-tuning.
 
 ```bash
 uv sync
-uv sync --extra train
 uv pip install "unsloth[base] @ git+https://github.com/unslothai/unsloth"
 uv pip install "unsloth_zoo[base] @ git+https://github.com/unslothai/unsloth-zoo"
 uv pip install triton xformers
@@ -17,21 +16,21 @@ uv pip install triton xformers
 ## Run training
 
 ```bash
+export HF_TOKEN=your_token
 uv run python scripts/finetune_qwen.py
 ```
 """
 
 from unsloth import FastLanguageModel
+from unsloth.chat_templates import standardize_data_formats, train_on_responses_only
 import torch
-from datasets import Dataset
-import polars as pl
-from config import HF_TOKEN, DATA_DIR, OUTPUT_DIR
+from datasets import load_dataset
+from config import HF_TOKEN, OUTPUT_DIR
 
 MODEL_NAME = "unsloth/Qwen3.5-0.8B"
+DATASET_NAME = "PrathamKotian26/code-review-python-autotrain"
 
 MAX_SEQ_LENGTH = 6000
-DTYPE = None
-LOAD_IN_4BIT = True
 
 LORA_R = 16
 LORA_ALPHA = 16
@@ -46,56 +45,20 @@ TARGET_MODULES = [
     "down_proj",
 ]
 
-INSTRUCTION = """Review the following Python code and provide constructive feedback. If you see issues, suggest fixes.
-
-Code to review:
-```python
-{before_code}
-```
-{diff_context}"""
-
-
-def load_data(split: str) -> Dataset:
-    file_path = DATA_DIR / f"python_reviews_{split}.parquet"
-    df = pl.read_parquet(file_path)
-
-    def format_sample(row):
-        diff_ctx = (
-            f"\nDiff context:\n```\n{row['diff_context']}\n```"
-            if row["diff_context"]
-            else ""
-        )
-        prompt = INSTRUCTION.format(
-            before_code=row["before_code"], diff_context=diff_ctx
-        )
-        return {
-            "instruction": prompt,
-            "output": row["reviewer_comment"],
-        }
-
-    samples = [format_sample(row) for row in df.to_dicts()]
-    return Dataset.from_list(samples)
-
-
-def convert_to_conversation(sample):
-    return {
-        "messages": [
-            {"role": "user", "content": sample["instruction"]},
-            {"role": "assistant", "content": sample["output"]},
-        ]
-    }
-
 
 def main():
     print("=" * 60)
     print("Loading model...")
     print("=" * 60)
+    print(f"Model: {MODEL_NAME}")
+    print(f"Dataset: {DATASET_NAME}")
+    print(f"Max sequence length: {MAX_SEQ_LENGTH}")
 
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=MODEL_NAME,
         max_seq_length=MAX_SEQ_LENGTH,
-        dtype=DTYPE,
-        load_in_4bit=LOAD_IN_4BIT,
+        dtype=None,
+        load_in_4bit=True,
         token=HF_TOKEN,
     )
 
@@ -117,50 +80,35 @@ def main():
     )
 
     print("\n" + "=" * 60)
-    print("Loading and formatting dataset...")
+    print("Loading dataset...")
     print("=" * 60)
 
-    train_dataset = load_data("train")
-    print(f"Train samples: {len(train_dataset):,}")
+    train_dataset = load_dataset(DATASET_NAME, split="train", token=HF_TOKEN)
+    val_dataset = load_dataset(DATASET_NAME, split="validation", token=HF_TOKEN)
 
-    val_dataset = load_data("validation")
+    print(f"Train samples: {len(train_dataset):,}")
     print(f"Validation samples: {len(val_dataset):,}")
 
-    train_converted = [convert_to_conversation(s) for s in train_dataset]
-    val_converted = [convert_to_conversation(s) for s in val_dataset]
+    if "messages" in train_dataset.column_names:
+        train_dataset = train_dataset.rename_column("messages", "conversations")
+        val_dataset = val_dataset.rename_column("messages", "conversations")
 
-    print("\nSample formatted conversation:")
-    print(train_converted[0])
+    train_dataset = standardize_data_formats(train_dataset)
+    val_dataset = standardize_data_formats(val_dataset)
 
-    print("\n" + "=" * 60)
-    print("Testing inference before training...")
-    print("=" * 60)
+    def formatting_prompts_func(examples):
+        texts = tokenizer.apply_chat_template(
+            examples["conversations"],
+            tokenize=False,
+            add_generation_prompt=False,
+        )
+        return {"text": [x.removeprefix(tokenizer.bos_token) for x in texts]}
 
-    FastLanguageModel.for_inference(model)
+    train_dataset = train_dataset.map(formatting_prompts_func, batched=True)
+    val_dataset = val_dataset.map(formatting_prompts_func, batched=True)
 
-    test_sample = train_dataset[0]
-    messages = [{"role": "user", "content": test_sample["instruction"]}]
-
-    inputs = tokenizer.apply_chat_template(
-        messages,
-        tokenize=True,
-        add_generation_prompt=True,
-        return_tensors="pt",
-    ).to("cuda")
-
-    from transformers import TextStreamer
-
-    text_streamer = TextStreamer(tokenizer, skip_prompt=True)
-
-    print("\nGenerating review (before training)...")
-    _ = model.generate(
-        inputs,
-        streamer=text_streamer,
-        max_new_tokens=256,
-        use_cache=True,
-        temperature=0.7,
-        min_p=0.1,
-    )
+    print("\nSample formatted text:")
+    print(train_dataset[0]["text"][:500] + "...")
 
     print("\n" + "=" * 60)
     print("Setting up trainer...")
@@ -173,8 +121,8 @@ def main():
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
-        train_dataset=train_converted,
-        eval_dataset=val_converted,
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset,
         args=SFTConfig(
             per_device_train_batch_size=2,
             per_device_eval_batch_size=2,
@@ -193,8 +141,15 @@ def main():
             output_dir=str(OUTPUT_DIR),
             report_to="none",
             max_length=MAX_SEQ_LENGTH,
+            dataset_text_field="text",
             packing=False,
         ),
+    )
+
+    trainer = train_on_responses_only(
+        trainer,
+        instruction_part="<|im_start|>user\n",
+        response_part="<|im_start|>assistant\n",
     )
 
     print("\n" + "=" * 60)
@@ -237,9 +192,9 @@ def main():
 
     FastLanguageModel.for_inference(model)
 
-    test_dataset = load_data("test")
+    test_dataset = load_dataset(DATASET_NAME, split="test", token=HF_TOKEN)
     test_sample = test_dataset[0]
-    messages = [{"role": "user", "content": test_sample["instruction"]}]
+    messages = test_sample["messages"][:-1]
 
     inputs = tokenizer.apply_chat_template(
         messages,
@@ -248,8 +203,12 @@ def main():
         return_tensors="pt",
     ).to("cuda")
 
+    from transformers import TextStreamer
+
+    text_streamer = TextStreamer(tokenizer, skip_prompt=True)
+
     print("\nExpected output:")
-    print(test_sample["output"])
+    print(test_sample["messages"][-1]["content"])
     print("\nGenerated review:")
 
     _ = model.generate(
@@ -274,8 +233,6 @@ def main():
     print("Done!")
     print("=" * 60)
     print(f"\nModel saved locally to: {OUTPUT_DIR / 'lora'}")
-    print("To push to Hugging Face Hub, run:")
-    print("  uv run python scripts/push_to_hub.py")
 
 
 if __name__ == "__main__":
