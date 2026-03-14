@@ -26,6 +26,8 @@ uv pip install "unsloth_zoo[base] @ git+https://github.com/unslothai/unsloth-zoo
 uv pip install triton xformers
 
 # Flash Attention 2 (recommended for ~1.5x speedup)
+# If disk space is low (common on RunPod), clear cache first:
+pip cache purge && apt-get clean
 pip install flash-attn --no-build-isolation
 ```
 
@@ -33,7 +35,7 @@ pip install flash-attn --no-build-isolation
 
 ```bash
 # Run with clean logging (recommended)
-python scripts/finetune_qwen.py 2>&1 | tee training.log
+uv run python scripts/finetune_qwen.py 2>&1 | tee training.log
 
 # View progress in another terminal
 tail -f training.log
@@ -46,9 +48,9 @@ Using `screen` or `tmux` is recommended for long training runs on remote instanc
 After training, push the model to HF Hub:
 
 ```bash
-python scripts/push_to_hub.py
+uv run python scripts/push_to_hub.py
 # Or specify custom repo:
-python scripts/push_to_hub.py --repo-id username/my-model
+uv run python scripts/push_to_hub.py --repo-id username/my-model
 ```
 
 ## Test the Model
@@ -57,10 +59,10 @@ Interactive testing with your trained model:
 
 ```bash
 # From local path
-python scripts/test_model.py --model-path ./models/code_review_model/lora
+uv run python scripts/test_model.py --model-path ./models/code_review_model/lora
 
 # From HF Hub
-python scripts/test_model.py --hub-repo PrathamKotian26/code-review-qwen-0.8b
+uv run python scripts/test_model.py --hub-repo PrathamKotian26/code-review-qwen-0.8b
 ```
 
 ## Configuration
