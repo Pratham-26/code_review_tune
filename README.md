@@ -32,6 +32,16 @@ uv pip install triton xformers
 python scripts/finetune_qwen.py
 ```
 
+## Push to Hugging Face Hub
+
+After training, push the model to HF Hub:
+
+```bash
+python scripts/push_to_hub.py
+# Or specify custom repo:
+python scripts/push_to_hub.py --repo-id username/my-model
+```
+
 ## Configuration
 
 | Parameter | Value |
