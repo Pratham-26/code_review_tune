@@ -11,8 +11,10 @@ import os
 from pathlib import Path
 from huggingface_hub import HfApi
 from huggingface_hub.errors import RepositoryNotFoundError
+import shutil
 
 OUTPUT_DIR = Path(__file__).parent.parent / "models" / "code_review_model" / "lora"
+MODEL_CARD = Path(__file__).parent.parent / "models" / "MODEL_CARD.md"
 DEFAULT_REPO = "PrathamKotian26/code-review-qwen-0.8b"
 
 
@@ -35,6 +37,11 @@ def main():
         action="store_true",
         help="Create private repository",
     )
+    parser.add_argument(
+        "--model-card-only",
+        action="store_true",
+        help="Only upload model card (README.md)",
+    )
     args = parser.parse_args()
 
     token = os.environ.get("HF_TOKEN", "")
@@ -42,13 +49,18 @@ def main():
         raise ValueError("HF_TOKEN environment variable must be set.")
 
     local_path = Path(args.local_path)
-    if not local_path.exists():
+
+    if not args.model_card_only and not local_path.exists():
         raise FileNotFoundError(f"Model not found at {local_path}")
 
+    if args.model_card_only and not MODEL_CARD.exists():
+        raise FileNotFoundError(f"Model card not found at {MODEL_CARD}")
+
     print("=" * 60)
-    print("Pushing model to Hugging Face Hub")
+    print("Pushing to Hugging Face Hub")
     print("=" * 60)
-    print(f"Local path: {local_path}")
+    if not args.model_card_only:
+        print(f"Local path: {local_path}")
     print(f"Repo ID: {args.repo_id}")
 
     api = HfApi(token=token)
@@ -60,13 +72,24 @@ def main():
         print(f"Creating repository: {args.repo_id}")
         api.create_repo(repo_id=args.repo_id, repo_type="model", private=args.private)
 
-    print("\nUploading files...")
-    api.upload_folder(
-        folder_path=str(local_path),
-        repo_id=args.repo_id,
-        repo_type="model",
-        commit_message="Upload trained LoRA adapter",
-    )
+    if not args.model_card_only:
+        print("\nUploading model files...")
+        api.upload_folder(
+            folder_path=str(local_path),
+            repo_id=args.repo_id,
+            repo_type="model",
+            commit_message="Upload trained LoRA adapter",
+        )
+
+    if MODEL_CARD.exists():
+        print("\nUploading model card...")
+        api.upload_file(
+            path_or_fileobj=str(MODEL_CARD),
+            path_in_repo="README.md",
+            repo_id=args.repo_id,
+            repo_type="model",
+            commit_message="Update model card",
+        )
 
     print("\n" + "=" * 60)
     print("Done!")
