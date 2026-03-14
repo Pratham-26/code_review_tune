@@ -137,6 +137,7 @@ def main():
             eval_strategy="steps",
             eval_steps=100,
             save_steps=500,
+            save_total_limit=2,
             optim="adamw_8bit",
             weight_decay=0.001,
             lr_scheduler_type="linear",
