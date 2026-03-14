@@ -14,7 +14,7 @@ from huggingface_hub.errors import RepositoryNotFoundError
 import shutil
 
 OUTPUT_DIR = Path(__file__).parent.parent / "models" / "code_review_model" / "lora"
-MODEL_CARD = Path(__file__).parent.parent / "models" / "MODEL_CARD.md"
+MODEL_CARD = Path(__file__).parent.parent / "MODEL_CARD.md"
 DEFAULT_REPO = "PrathamKotian26/code-review-qwen-0.8b"
 
 
