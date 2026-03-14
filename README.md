@@ -29,6 +29,11 @@ uv pip install triton xformers
 # If disk space is low (common on RunPod), clear cache first:
 pip cache purge && apt-get clean
 pip install flash-attn --no-build-isolation
+
+# If still not enough space, install to workspace:
+pip install flash-attn --no-build-isolation --target=/workspace/pip_packages
+export PYTHONPATH=/workspace/pip_packages:$PYTHONPATH
+echo 'export PYTHONPATH=/workspace/pip_packages:$PYTHONPATH' >> ~/.bashrc
 ```
 
 ## Run Training
