@@ -25,6 +25,7 @@ from unsloth.chat_templates import standardize_data_formats, train_on_responses_
 import os
 import torch
 from datasets import load_dataset
+from pathlib import Path
 from config import HF_TOKEN, OUTPUT_DIR
 
 os.environ["TQDM_MININTERVAL"] = "5"
@@ -46,6 +47,14 @@ TARGET_MODULES = [
     "up_proj",
     "down_proj",
 ]
+
+
+def find_latest_checkpoint(output_dir: Path) -> Path | None:
+    checkpoints = list(output_dir.glob("checkpoint-*"))
+    if not checkpoints:
+        return None
+    checkpoints.sort(key=lambda x: int(x.name.split("-")[1]))
+    return checkpoints[-1]
 
 
 def main():
@@ -121,6 +130,13 @@ def main():
 
     FastLanguageModel.for_training(model)
 
+    checkpoint_path = find_latest_checkpoint(OUTPUT_DIR)
+    if checkpoint_path:
+        print(f"Found checkpoint: {checkpoint_path}")
+        print("Will resume from this checkpoint.")
+    else:
+        print("No checkpoint found. Starting fresh training.")
+
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
@@ -170,7 +186,7 @@ def main():
     print("Starting training...")
     print("=" * 60)
 
-    trainer_stats = trainer.train()
+    trainer_stats = trainer.train(resume_from_checkpoint=checkpoint_path)
 
     print("\n" + "=" * 60)
     print("Training Complete - Final Stats")
