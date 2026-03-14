@@ -56,8 +56,9 @@ def main():
     text_tokenizer = (
         tokenizer.tokenizer if hasattr(tokenizer, "tokenizer") else tokenizer
     )
-    tokenized = text_tokenizer(prompt, return_tensors="pt")
+    tokenized = text_tokenizer(prompt, return_tensors="pt", padding=True)
     input_ids = tokenized["input_ids"].to("cuda")
+    attention_mask = tokenized["attention_mask"].to("cuda")
 
     from transformers import TextStreamer
 
@@ -95,6 +96,7 @@ def main():
 
     _ = model.generate(
         input_ids,
+        attention_mask=attention_mask,
         streamer=text_streamer,
         max_new_tokens=512,
         use_cache=True,

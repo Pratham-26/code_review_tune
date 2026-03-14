@@ -85,8 +85,9 @@ def process_data(data):
     text_tokenizer = (
         tokenizer.tokenizer if hasattr(tokenizer, "tokenizer") else tokenizer
     )
-    tokenized = text_tokenizer(prompt, return_tensors="pt")
+    tokenized = text_tokenizer(prompt, return_tensors="pt", padding=True)
     input_ids = tokenized["input_ids"].to("cuda")
+    attention_mask = tokenized["attention_mask"].to("cuda")
 
     streamer = TextStreamer(text_tokenizer, skip_prompt=True)
 
@@ -101,6 +102,7 @@ def process_data(data):
 
     _ = model.generate(
         input_ids,
+        attention_mask=attention_mask,
         streamer=streamer,
         max_new_tokens=args.max_tokens,
         use_cache=True,
