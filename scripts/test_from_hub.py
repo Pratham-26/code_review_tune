@@ -77,14 +77,17 @@ def process_data(data):
         }
     ]
 
-    inputs = tokenizer.apply_chat_template(
-        messages,
-        tokenize=True,
-        add_generation_prompt=True,
-        return_tensors="pt",
-    ).to("cuda")
+    prompt = "<|im_start|>user\n"
+    for msg in messages:
+        if msg["role"] == "user":
+            prompt += msg["content"] + "<|im_end|>\n<|im_start|>assistant\n"
 
-    streamer = TextStreamer(tokenizer, skip_prompt=True)
+    text_tokenizer = (
+        tokenizer.tokenizer if hasattr(tokenizer, "tokenizer") else tokenizer
+    )
+    inputs = text_tokenizer(prompt, return_tensors="pt").to("cuda")
+
+    streamer = TextStreamer(text_tokenizer, skip_prompt=True)
 
     print("\n" + "=" * 60)
     print("Code to review:")
