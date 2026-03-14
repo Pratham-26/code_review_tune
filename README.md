@@ -18,7 +18,8 @@ cd code_review_tune
 # Set HF token
 export HF_TOKEN=your_token_here
 
-# Install dependencies with uv
+# Create virtual environment and install dependencies
+uv venv && source .venv/bin/activate
 uv pip install -r requirements.txt
 uv pip install "unsloth[base] @ git+https://github.com/unslothai/unsloth"
 uv pip install "unsloth_zoo[base] @ git+https://github.com/unslothai/unsloth-zoo"
@@ -28,7 +29,7 @@ uv pip install triton xformers
 ## Run Training
 
 ```bash
-uv run python scripts/finetune_qwen.py
+python scripts/finetune_qwen.py
 ```
 
 ## Configuration
