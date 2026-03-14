@@ -56,7 +56,8 @@ def main():
     text_tokenizer = (
         tokenizer.tokenizer if hasattr(tokenizer, "tokenizer") else tokenizer
     )
-    inputs = text_tokenizer(prompt, return_tensors="pt").to("cuda")
+    tokenized = text_tokenizer(prompt, return_tensors="pt")
+    input_ids = tokenized["input_ids"].to("cuda")
 
     from transformers import TextStreamer
 
@@ -93,7 +94,7 @@ def main():
     print("=" * 60)
 
     _ = model.generate(
-        inputs,
+        input_ids,
         streamer=text_streamer,
         max_new_tokens=512,
         use_cache=True,

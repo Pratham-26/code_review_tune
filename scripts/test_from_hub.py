@@ -85,7 +85,8 @@ def process_data(data):
     text_tokenizer = (
         tokenizer.tokenizer if hasattr(tokenizer, "tokenizer") else tokenizer
     )
-    inputs = text_tokenizer(prompt, return_tensors="pt").to("cuda")
+    tokenized = text_tokenizer(prompt, return_tensors="pt")
+    input_ids = tokenized["input_ids"].to("cuda")
 
     streamer = TextStreamer(text_tokenizer, skip_prompt=True)
 
@@ -99,7 +100,7 @@ def process_data(data):
     print("=" * 60)
 
     _ = model.generate(
-        inputs,
+        input_ids,
         streamer=streamer,
         max_new_tokens=args.max_tokens,
         use_cache=True,
