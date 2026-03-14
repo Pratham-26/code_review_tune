@@ -10,4 +10,3 @@ peft
 huggingface_hub
 triton
 xformers
-flash-attn

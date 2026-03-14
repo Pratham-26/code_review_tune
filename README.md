@@ -22,6 +22,9 @@ export HF_TOKEN=your_token_here
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+
+# Flash Attention 2 (requires torch first, ~1.5x speedup)
+pip install flash-attn --no-build-isolation
 ```
 
 ## Run Training
