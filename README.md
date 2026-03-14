@@ -8,7 +8,7 @@ Fine-tune Qwen3.5-0.8B for Python code review using Unsloth + LoRA.
 - **Filtered**: [PrathamKotian26/code-review-python-autotrain](https://huggingface.co/datasets/PrathamKotian26/code-review-python-autotrain)
 - **Samples**: ~40k train, ~800 validation, ~800 test
 
-## Setup
+## Setup (RunPod / Cloud)
 
 ```bash
 # Clone the repository
@@ -19,28 +19,16 @@ cd code_review_tune
 export HF_TOKEN=your_token_here
 
 # Create virtual environment and install dependencies
-uv venv && source .venv/bin/activate
-uv pip install -r requirements.txt
-uv pip install "unsloth[base] @ git+https://github.com/unslothai/unsloth"
-uv pip install "unsloth_zoo[base] @ git+https://github.com/unslothai/unsloth-zoo"
-uv pip install triton xformers
-
-# Flash Attention 2 (recommended for ~1.5x speedup)
-# If disk space is low (common on RunPod), clear cache first:
-pip cache purge && apt-get clean
-pip install flash-attn --no-build-isolation
-
-# If still not enough space, install to workspace:
-pip install flash-attn --no-build-isolation --target=/workspace/pip_packages
-export PYTHONPATH=/workspace/pip_packages:$PYTHONPATH
-echo 'export PYTHONPATH=/workspace/pip_packages:$PYTHONPATH' >> ~/.bashrc
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ## Run Training
 
 ```bash
 # Run with clean logging (recommended)
-uv run python scripts/finetune_qwen.py 2>&1 | tee training.log
+python scripts/finetune_qwen.py 2>&1 | tee training.log
 
 # View progress in another terminal
 tail -f training.log
@@ -53,9 +41,9 @@ Using `screen` or `tmux` is recommended for long training runs on remote instanc
 After training, push the model to HF Hub:
 
 ```bash
-uv run python scripts/push_to_hub.py
+python scripts/push_to_hub.py
 # Or specify custom repo:
-uv run python scripts/push_to_hub.py --repo-id username/my-model
+python scripts/push_to_hub.py --repo-id username/my-model
 ```
 
 ## Test the Model
@@ -64,10 +52,10 @@ Interactive testing with your trained model:
 
 ```bash
 # From local path
-uv run python scripts/test_model.py --model-path ./models/code_review_model/lora
+python scripts/test_model.py --model-path ./models/code_review_model/lora
 
 # From HF Hub
-uv run python scripts/test_model.py --hub-repo PrathamKotian26/code-review-qwen-0.8b
+python scripts/test_model.py --hub-repo PrathamKotian26/code-review-qwen-0.8b
 ```
 
 ## Configuration
@@ -82,6 +70,7 @@ uv run python scripts/test_model.py --hub-repo PrathamKotian26/code-review-qwen-
 | Learning rate | 2e-4 |
 | Epochs | 1 |
 | Packing | Enabled |
+| Flash Attention 2 | Auto-detected |
 
 ## Output
 

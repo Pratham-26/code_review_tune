@@ -1,4 +1,5 @@
 unsloth
+unsloth_zoo
 trl>=0.12.0
 transformers>=4.40.0
 datasets
@@ -7,3 +8,6 @@ accelerate
 bitsandbytes
 peft
 huggingface_hub
+triton
+xformers
+flash-attn
