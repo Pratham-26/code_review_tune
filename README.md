@@ -42,6 +42,18 @@ python scripts/push_to_hub.py
 python scripts/push_to_hub.py --repo-id username/my-model
 ```
 
+## Test the Model
+
+Interactive testing with your trained model:
+
+```bash
+# From local path
+python scripts/test_model.py --model-path ./models/code_review_model/lora
+
+# From HF Hub
+python scripts/test_model.py --hub-repo PrathamKotian26/code-review-qwen-0.8b
+```
+
 ## Configuration
 
 | Parameter | Value |
