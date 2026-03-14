@@ -22,9 +22,12 @@ python scripts/finetune_qwen.py 2>&1 | tee training.log
 
 from unsloth import FastLanguageModel
 from unsloth.chat_templates import standardize_data_formats, train_on_responses_only
+import os
 import torch
 from datasets import load_dataset
 from config import HF_TOKEN, OUTPUT_DIR
+
+os.environ["TQDM_MININTERVAL"] = "5"
 
 MODEL_NAME = "unsloth/Qwen3.5-0.8B"
 DATASET_NAME = "PrathamKotian26/code-review-python-autotrain"
