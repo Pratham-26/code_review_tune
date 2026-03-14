@@ -32,12 +32,6 @@ uv pip install triton xformers
 python scripts/finetune_qwen.py
 ```
 
-## Run Training
-
-```bash
-python scripts/finetune_qwen.py
-```
-
 ## Configuration
 
 | Parameter | Value |
