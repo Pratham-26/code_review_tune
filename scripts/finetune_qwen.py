@@ -102,7 +102,8 @@ def main():
             tokenize=False,
             add_generation_prompt=False,
         )
-        return {"text": [x.removeprefix(tokenizer.bos_token) for x in texts]}
+        bos = tokenizer.bos_token or ""
+        return {"text": [x.removeprefix(bos) for x in texts]}
 
     train_dataset = train_dataset.map(formatting_prompts_func, batched=True)
     val_dataset = val_dataset.map(formatting_prompts_func, batched=True)
