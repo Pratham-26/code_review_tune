@@ -45,10 +45,11 @@ print(f"Median: {np.median(lengths):.0f}")
 print(f"Std: {lengths.std():.0f}")
 print()
 print("Percentiles:")
-for p in [50, 75, 90, 95, 99, 99.5, 99.9]:
+for p in [50, 75, 90, 95, 97, 98, 99, 99.5, 99.9]:
     print(f"  {p}%: {np.percentile(lengths, p):.0f} tokens")
 print()
 print("Coverage at max_length:")
-for m in [2048, 3072, 4096, 5120, 6144, 8192]:
+for m in [2048, 2500, 3072, 4096, 5120, 6144, 8192]:
     covered = (lengths <= m).sum() / len(lengths) * 100
-    print(f"  {m}: {covered:.1f}%")
+    count = (lengths <= m).sum()
+    print(f"  {m}: {covered:.1f}% ({count:,} samples)")
