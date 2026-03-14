@@ -32,7 +32,7 @@ os.environ["TQDM_MININTERVAL"] = "5"
 MODEL_NAME = "unsloth/Qwen3.5-0.8B"
 DATASET_NAME = "PrathamKotian26/code-review-python-autotrain"
 
-MAX_SEQ_LENGTH = 2000
+MAX_SEQ_LENGTH = 2056
 
 LORA_R = 16
 LORA_ALPHA = 16
