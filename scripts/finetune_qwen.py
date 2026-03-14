@@ -32,7 +32,7 @@ os.environ["TQDM_MININTERVAL"] = "5"
 MODEL_NAME = "unsloth/Qwen3.5-0.8B"
 DATASET_NAME = "PrathamKotian26/code-review-python-autotrain"
 
-MAX_SEQ_LENGTH = 4096
+MAX_SEQ_LENGTH = 3072
 
 LORA_R = 16
 LORA_ALPHA = 16
@@ -127,9 +127,9 @@ def main():
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         args=SFTConfig(
-            per_device_train_batch_size=4,
-            per_device_eval_batch_size=4,
-            gradient_accumulation_steps=2,
+            per_device_train_batch_size=8,
+            per_device_eval_batch_size=8,
+            gradient_accumulation_steps=1,
             warmup_steps=20,
             num_train_epochs=1,
             learning_rate=2e-4,
